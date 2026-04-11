@@ -1,6 +1,28 @@
 import { Hono } from "hono";
+import { z } from "zod";
 import { sql } from "../db/index.js";
 import { config } from "../lib/config.js";
+
+// ─── Input validation schemas ───
+
+const ethAddressRegex = /^0x[a-fA-F0-9]{40}$/;
+
+const createKeySchema = z.object({
+  label: z.string().min(1).max(255),
+  ownerId: z.string().min(1).max(255),
+  rateLimit: z.number().int().min(1).max(10000).optional().default(60),
+});
+
+const updateKeySchema = z.object({
+  enabled: z.boolean().optional(),
+  rateLimit: z.number().int().min(1).max(10000).optional(),
+}).refine((d) => d.enabled !== undefined || d.rateLimit !== undefined, {
+  message: "At least one of enabled or rateLimit must be provided",
+});
+
+const pauseAgentSchema = z.object({
+  reason: z.string().max(1000).optional(),
+});
 
 export const adminRoutes = new Hono();
 
@@ -114,14 +136,18 @@ adminRoutes.get("/keys", async (c) => {
 });
 
 adminRoutes.post("/keys", async (c) => {
-  const body = await c.req.json();
+  const parsed = createKeySchema.safeParse(await c.req.json());
+  if (!parsed.success) {
+    return c.json({ error: "Invalid input", details: parsed.error.flatten().fieldErrors }, 400);
+  }
+  const { label, ownerId, rateLimit } = parsed.data;
   const key = crypto.randomUUID();
   const [created] = await sql`
     INSERT INTO api_keys (key, label, owner_id, rate_limit)
-    VALUES (${key}, ${body.label}, ${body.ownerId}, ${body.rateLimit || 60})
+    VALUES (${key}, ${label}, ${ownerId}, ${rateLimit})
     RETURNING id, key, label, owner_id, rate_limit, enabled, created_at
   `;
-  audit("create_key", "api_keys", created.id, { label: body.label, ownerId: body.ownerId });
+  audit("create_key", "api_keys", created.id, { label, ownerId });
   return c.json({ apiKey: created }, 201);
 });
 
@@ -129,7 +155,11 @@ adminRoutes.post("/keys", async (c) => {
 
 // Get agent status (paused/active) — publicly accessible so agents can self-check
 adminRoutes.get("/agent/:address/status", async (c) => {
-  const address = c.req.param("address").toLowerCase();
+  const raw = c.req.param("address");
+  if (!ethAddressRegex.test(raw)) {
+    return c.json({ error: "Invalid Ethereum address" }, 400);
+  }
+  const address = raw.toLowerCase();
   const [control] = await sql`SELECT * FROM agent_controls WHERE agent_address = ${address}`;
   return c.json({
     address,
@@ -141,21 +171,33 @@ adminRoutes.get("/agent/:address/status", async (c) => {
 
 // Pause agent spending
 adminRoutes.post("/agent/:address/pause", async (c) => {
-  const address = c.req.param("address").toLowerCase();
-  const body = await c.req.json().catch(() => ({}));
+  const raw = c.req.param("address");
+  if (!ethAddressRegex.test(raw)) {
+    return c.json({ error: "Invalid Ethereum address" }, 400);
+  }
+  const address = raw.toLowerCase();
+  const parsed = pauseAgentSchema.safeParse(await c.req.json().catch(() => ({})));
+  if (!parsed.success) {
+    return c.json({ error: "Invalid input", details: parsed.error.flatten().fieldErrors }, 400);
+  }
+  const reason = parsed.data.reason || null;
   await sql`
     INSERT INTO agent_controls (agent_address, paused, paused_at, paused_by, reason)
-    VALUES (${address}, TRUE, NOW(), 'admin', ${body.reason || null})
+    VALUES (${address}, TRUE, NOW(), 'admin', ${reason})
     ON CONFLICT (agent_address) DO UPDATE SET
-      paused = TRUE, paused_at = NOW(), paused_by = 'admin', reason = ${body.reason || null}
+      paused = TRUE, paused_at = NOW(), paused_by = 'admin', reason = ${reason}
   `;
-  audit("pause_agent", "agent_controls", address, { reason: body.reason });
+  audit("pause_agent", "agent_controls", address, { reason });
   return c.json({ success: true, address, paused: true });
 });
 
 // Resume agent spending
 adminRoutes.post("/agent/:address/resume", async (c) => {
-  const address = c.req.param("address").toLowerCase();
+  const raw = c.req.param("address");
+  if (!ethAddressRegex.test(raw)) {
+    return c.json({ error: "Invalid Ethereum address" }, 400);
+  }
+  const address = raw.toLowerCase();
   await sql`
     INSERT INTO agent_controls (agent_address, paused)
     VALUES (${address}, FALSE)
@@ -168,13 +210,17 @@ adminRoutes.post("/agent/:address/resume", async (c) => {
 
 adminRoutes.patch("/keys/:id", async (c) => {
   const id = c.req.param("id");
-  const body = await c.req.json();
+  const parsed = updateKeySchema.safeParse(await c.req.json());
+  if (!parsed.success) {
+    return c.json({ error: "Invalid input", details: parsed.error.flatten().fieldErrors }, 400);
+  }
+  const { enabled, rateLimit } = parsed.data;
   await sql`
     UPDATE api_keys SET
-      enabled = COALESCE(${body.enabled ?? null}, enabled),
-      rate_limit = COALESCE(${body.rateLimit ?? null}, rate_limit)
+      enabled = COALESCE(${enabled ?? null}, enabled),
+      rate_limit = COALESCE(${rateLimit ?? null}, rate_limit)
     WHERE id = ${id}
   `;
-  audit("update_key", "api_keys", id, { enabled: body.enabled, rateLimit: body.rateLimit });
+  audit("update_key", "api_keys", id, { enabled, rateLimit });
   return c.json({ success: true });
 });

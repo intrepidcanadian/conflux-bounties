@@ -40,6 +40,7 @@ vi.mock("@x402/shared", () => ({
     s: "0x" + "bb".repeat(32),
   }),
   hashNonce: (nonce: string) => "0x" + "cc".repeat(32),
+  tokenSymbol: (address?: string) => "USDT0",
 }));
 
 // ─── Helpers ────────────────────────────────────────────────────

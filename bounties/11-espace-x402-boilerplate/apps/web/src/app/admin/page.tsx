@@ -9,6 +9,7 @@ import { BarChart3, Key, DollarSign, Download, Plus, Bot, Pause, Play, MessageSq
 import AgentChat from "@/components/AgentChat";
 import { Navbar } from "@/components/Navbar";
 import { fetchDisputes, resolveDispute, adminHeaders } from "@/lib/api";
+import { tokenSymbol } from "@x402/shared";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:4000";
 const ADMIN_WALLETS = [
@@ -251,16 +252,7 @@ export default function AdminPage() {
 
   const escrowTotal = escrowInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
 
-  function escrowTokenSymbol(address?: string): string {
-    if (!address) return "USDT0";
-    const known: Record<string, string> = {
-      "0xaf37e8b6c9ed7f6318979f56fc287d76c30847ff": "USDT0",
-      "0x70bfd7f7eadf9b9827541272589a6b2bb760ae2e": "CNHT0",
-      "0x15964435f2d3e500407e234b750bc2d4027996cd": "USDT0",
-      "0x91de8a02c4e85b4b7cab8c13f71a5272e4ef9b11": "USDT0",
-    };
-    return known[address.toLowerCase()] ?? "USDT0";
-  }
+  const escrowTokenSymbol = tokenSymbol;
 
   function formatTimeRemaining(ms: number): string {
     if (ms <= 0) return "Ready";

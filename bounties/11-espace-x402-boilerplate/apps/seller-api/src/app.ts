@@ -15,7 +15,14 @@ import { serializeMetrics, httpRequestsTotal, httpRequestDuration } from "./lib/
 
 export const app = new Hono();
 
-app.use("*", cors());
+app.use("*", cors({
+  origin: process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(",")
+    : ["http://localhost:3000", "http://localhost:4000"],
+  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowHeaders: ["Content-Type", "Authorization", "x-api-key", "x-payment-payer", "x-payment-invoice-id", "x-chain-id"],
+  exposeHeaders: ["X-RateLimit-Limit", "X-RateLimit-Remaining"],
+}));
 app.use("*", requestLogger);
 app.use("*", rateLimiter);
 
@@ -47,8 +54,12 @@ app.route("/x402/manifest", manifestRoutes);
 
 // Public agent status check (no auth required — agents need to self-check)
 app.get("/agent/:address/status", async (c) => {
+  const raw = c.req.param("address");
+  if (!/^0x[a-fA-F0-9]{40}$/.test(raw)) {
+    return c.json({ error: "Invalid Ethereum address" }, 400);
+  }
   const { sql } = await import("./db/index.js");
-  const address = c.req.param("address").toLowerCase();
+  const address = raw.toLowerCase();
   const [control] = await sql`SELECT * FROM agent_controls WHERE agent_address = ${address}`;
   return c.json({
     address,

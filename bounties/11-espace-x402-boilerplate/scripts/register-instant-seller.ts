@@ -33,8 +33,7 @@ if (!serviceKey) {
   process.exit(1);
 }
 if (!instantSellerKey) {
-  console.error("SERVICE_WALLET_KEY_2 not set in .env — add it first:");
-  console.error("  SERVICE_WALLET_KEY_2=***REDACTED_KEY***");
+  console.error("SERVICE_WALLET_KEY_2 not set in .env — generate a new key and add it. See .env.example.");
   process.exit(1);
 }
 if (!CONTRACT) {

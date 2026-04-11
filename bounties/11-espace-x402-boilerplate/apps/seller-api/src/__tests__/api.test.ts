@@ -660,11 +660,19 @@ describe("Dispute Resolution", () => {
 
   // ─── Submission tests ───
 
+  // Valid test addresses and UUIDs for zod-validated dispute routes
+  const PAYER_ADDR = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
+  const OTHER_ADDR = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+  const INV_UUID_1 = "a0000000-0000-4000-8000-000000000001";
+  const INV_UUID_2 = "a0000000-0000-4000-8000-000000000002";
+  const INV_UUID_3 = "a0000000-0000-4000-8000-000000000003";
+  const INV_UUID_4 = "a0000000-0000-4000-8000-000000000004";
+
   it("should create a dispute for a paid invoice", async () => {
     mockRows.invoices = [{
-      id: "inv-sub1",
+      id: INV_UUID_1,
       status: "paid",
-      payer: "0xPayer123",
+      payer: PAYER_ADDR,
       endpoint: "/data/premium",
       amount: "100000",
     }];
@@ -673,7 +681,7 @@ describe("Dispute Resolution", () => {
     const res = await app.request("/disputes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ invoiceId: "inv-sub1", requester: "0xPayer123", reason: "Did not receive data" }),
+      body: JSON.stringify({ invoiceId: INV_UUID_1, requester: PAYER_ADDR, reason: "Did not receive data" }),
     });
     expect(res.status).toBe(201);
     const body = await res.json();
@@ -685,11 +693,11 @@ describe("Dispute Resolution", () => {
     const res = await app.request("/disputes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ invoiceId: "inv-1" }), // missing requester and reason
+      body: JSON.stringify({ invoiceId: INV_UUID_1 }), // missing requester and reason
     });
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain("Missing required fields");
+    expect(body.error).toBe("Invalid request");
   });
 
   it("should return 404 when invoice does not exist", async () => {
@@ -697,17 +705,17 @@ describe("Dispute Resolution", () => {
     const res = await app.request("/disputes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ invoiceId: "nonexistent", requester: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", reason: "test" }),
+      body: JSON.stringify({ invoiceId: INV_UUID_2, requester: PAYER_ADDR, reason: "test" }),
     });
     expect(res.status).toBe(404);
   });
 
   it("should return 400 when invoice is not in paid status", async () => {
-    mockRows.invoices = [{ id: "inv-pend", status: "pending", payer: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8" }];
+    mockRows.invoices = [{ id: INV_UUID_3, status: "pending", payer: PAYER_ADDR }];
     const res = await app.request("/disputes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ invoiceId: "inv-pend", requester: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", reason: "test" }),
+      body: JSON.stringify({ invoiceId: INV_UUID_3, requester: PAYER_ADDR, reason: "test" }),
     });
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -715,11 +723,11 @@ describe("Dispute Resolution", () => {
   });
 
   it("should return 403 when requester is not the payer", async () => {
-    mockRows.invoices = [{ id: "inv-auth", status: "paid", payer: "0xRealPayer" }];
+    mockRows.invoices = [{ id: INV_UUID_3, status: "paid", payer: PAYER_ADDR }];
     const res = await app.request("/disputes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ invoiceId: "inv-auth", requester: "0xWrongPerson", reason: "test" }),
+      body: JSON.stringify({ invoiceId: INV_UUID_3, requester: OTHER_ADDR, reason: "test" }),
     });
     expect(res.status).toBe(403);
     const body = await res.json();
@@ -727,12 +735,12 @@ describe("Dispute Resolution", () => {
   });
 
   it("should return 409 when an open dispute already exists", async () => {
-    mockRows.invoices = [{ id: "inv-dup", status: "paid", payer: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8" }];
-    mockRows.disputes = [{ id: "existing-disp", invoice_id: "inv-dup", status: "open" }];
+    mockRows.invoices = [{ id: INV_UUID_4, status: "paid", payer: PAYER_ADDR }];
+    mockRows.disputes = [{ id: "existing-disp", invoice_id: INV_UUID_4, status: "open" }];
     const res = await app.request("/disputes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ invoiceId: "inv-dup", requester: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", reason: "duplicate" }),
+      body: JSON.stringify({ invoiceId: INV_UUID_4, requester: PAYER_ADDR, reason: "duplicate" }),
     });
     expect(res.status).toBe(409);
     const body = await res.json();
@@ -863,8 +871,7 @@ describe("Dispute Resolution", () => {
     });
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain("approved");
-    expect(body.error).toContain("rejected");
+    expect(body.error).toBe("Invalid request");
   });
 });
 

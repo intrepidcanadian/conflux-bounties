@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { z } from "zod";
 import { sql } from "../db/index.js";
 import { logger } from "../lib/logger.js";
 import { adminAuth } from "../middleware/adminAuth.js";
@@ -6,16 +7,27 @@ import { verifier } from "../lib/verifier.js";
 import { sendAlert } from "../lib/alerts.js";
 import { publish } from "../lib/eventBus.js";
 
+const disputeSchema = z.object({
+  invoiceId: z.string().uuid(),
+  requester: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address"),
+  reason: z.string().min(1).max(2000),
+});
+
+const resolveSchema = z.object({
+  resolution: z.enum(["approved", "rejected"]),
+  adminNote: z.string().max(2000).optional(),
+});
+
 export const disputeRoutes = new Hono();
 
 // Submit a dispute (public — requires wallet address matching invoice payer)
 disputeRoutes.post("/", async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const { invoiceId, requester, reason } = body;
-
-  if (!invoiceId || !requester || !reason) {
-    return c.json({ error: "Missing required fields: invoiceId, requester, reason" }, 400);
+  const parsed = disputeSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid request", details: parsed.error.flatten().fieldErrors }, 400);
   }
+  const { invoiceId, requester, reason } = parsed.data;
 
   // Validate invoice exists and is paid
   const [invoice] = await sql`SELECT * FROM invoices WHERE id = ${invoiceId}`;
@@ -70,11 +82,11 @@ disputeRoutes.get("/", adminAuth, async (c) => {
 disputeRoutes.post("/:id/resolve", adminAuth, async (c) => {
   const id = c.req.param("id");
   const body = await c.req.json().catch(() => ({}));
-  const { resolution, adminNote } = body;
-
-  if (!resolution || !["approved", "rejected"].includes(resolution)) {
-    return c.json({ error: "resolution must be 'approved' or 'rejected'" }, 400);
+  const parsed = resolveSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid request", details: parsed.error.flatten().fieldErrors }, 400);
   }
+  const { resolution, adminNote } = parsed.data;
 
   const [dispute] = await sql`SELECT * FROM disputes WHERE id = ${id}`;
   if (!dispute) return c.json({ error: "Dispute not found" }, 404);
