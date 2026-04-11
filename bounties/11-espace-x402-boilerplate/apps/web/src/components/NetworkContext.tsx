@@ -3,6 +3,7 @@
 import { createContext, useContext } from "react";
 import { useChainId } from "wagmi";
 import { getContractAddress } from "@/lib/wagmi";
+import { USDT0_MAINNET } from "@x402/shared";
 
 interface NetworkConfig {
   isTestnet: boolean;
@@ -28,7 +29,7 @@ const CONFIGS: Record<number, Omit<NetworkConfig, "contractAddress">> = {
     chainId: 1030,
     chainName: "Conflux eSpace",
     explorerUrl: "https://evm.confluxscan.io",
-    paymentToken: "0xaf37e8b6c9ed7f6318979f56fc287d76c30847ff",
+    paymentToken: USDT0_MAINNET,
     serviceWallet: process.env.NEXT_PUBLIC_SERVICE_WALLET_ADDRESS || "",
   },
 };

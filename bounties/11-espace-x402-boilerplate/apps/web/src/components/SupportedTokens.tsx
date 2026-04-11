@@ -1,18 +1,19 @@
 "use client";
 
 import { ExternalLink, Shield, Coins, Globe } from "lucide-react";
+import { USDT0_MAINNET, CNHT0_MAINNET } from "@x402/shared";
 
 const TOKENS = [
   {
     symbol: "USDT0",
     name: "USD₮0",
     description: "Tether USD stablecoin — the most widely used dollar-pegged stablecoin, now natively on Conflux eSpace with full ERC-3009 authorization support.",
-    mainnetAddress: "0xaf37e8b6c9ed7f6318979f56fc287d76c30847ff",
+    mainnetAddress: USDT0_MAINNET,
     decimals: 6,
     peg: "US Dollar (USD)",
     issuer: "Tether",
     standard: "OFT (LayerZero)",
-    explorerUrl: "https://evm.confluxscan.io/token/0xaf37e8b6c9ed7f6318979f56fc287d76c30847ff",
+    explorerUrl: `https://evm.confluxscan.io/token/${USDT0_MAINNET}`,
     color: "emerald",
     icon: "💵",
   },
@@ -20,12 +21,12 @@ const TOKENS = [
     symbol: "AxCNH",
     name: "AxCNH",
     description: "Tether offshore Chinese Yuan stablecoin — enabling cross-border trade settlement across Belt and Road Initiative countries via Conflux eSpace.",
-    mainnetAddress: "0x70bfd7f7eadf9b9827541272589a6b2bb760ae2e",
+    mainnetAddress: CNHT0_MAINNET,
     decimals: 6,
     peg: "Offshore Chinese Yuan (CNH)",
     issuer: "Tether",
     standard: "OFT (LayerZero)",
-    explorerUrl: "https://evm.confluxscan.io/token/0x70bfd7f7eadf9b9827541272589a6b2bb760ae2e",
+    explorerUrl: `https://evm.confluxscan.io/token/${CNHT0_MAINNET}`,
     color: "red",
     icon: "🇨🇳",
   },

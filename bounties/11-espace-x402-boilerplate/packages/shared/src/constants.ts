@@ -145,6 +145,24 @@ export const DEFAULT_PRICING: Record<string, string> = {
   "/compute/simulate": "500000", // 0.50 USDT0
 };
 
+/**
+ * Map of known token addresses (lowercased) to human-readable symbols.
+ * Single source of truth — use this instead of hardcoding address→symbol maps.
+ */
+export const TOKEN_NAME_MAP: Record<string, string> = {
+  [USDT0_MAINNET]: "USDT0",
+  [CNHT0_MAINNET]: "CNHT0",
+  // Testnet deployments (addresses set after deploy)
+  "0x15964435f2d3e500407e234b750bc2d4027996cd": "USDT0",
+  "0x91de8a02c4e85b4b7cab8c13f71a5272e4ef9b11": "USDT0",
+};
+
+/** Resolve a human-readable token symbol from an address */
+export function tokenSymbol(address?: string): string {
+  if (!address) return "USDT0";
+  return TOKEN_NAME_MAP[address.toLowerCase()] ?? "USDT0";
+}
+
 export const RATE_LIMITS = {
   FREE_RPM: 60,
   PREMIUM_RPM: 120,

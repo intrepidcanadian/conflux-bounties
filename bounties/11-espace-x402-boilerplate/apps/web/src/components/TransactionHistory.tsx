@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 import { apiFetch, submitDispute } from "@/lib/api";
+import { tokenSymbol } from "@x402/shared";
 import { CheckCircle, Clock, XCircle, Receipt, RotateCcw, ExternalLink, AlertTriangle, Lock, Unlock, Timer } from "lucide-react";
 
 interface Invoice {
@@ -19,17 +20,6 @@ interface Invoice {
   release_at?: string;
   escrow_remaining_ms?: number;
   escrow_released?: boolean;
-}
-
-function tokenSymbol(address?: string): string {
-  if (!address) return "USDT0";
-  const known: Record<string, string> = {
-    "0xaf37e8b6c9ed7f6318979f56fc287d76c30847ff": "USDT0",
-    "0x70bfd7f7eadf9b9827541272589a6b2bb760ae2e": "CNHT0",
-    "0x15964435f2d3e500407e234b750bc2d4027996cd": "USDT0",
-    "0x91de8a02c4e85b4b7cab8c13f71a5272e4ef9b11": "USDT0",
-  };
-  return known[address.toLowerCase()] ?? "USDT0";
 }
 
 type DisputeMsg = { type: "success" | "error"; msg: string } | null;

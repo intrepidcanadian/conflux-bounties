@@ -32,6 +32,7 @@ import {
 import { verifyTypedData } from "viem";
 
 import { X402Verifier, confluxESpaceTestnet, confluxESpaceMainnet } from "@x402/sdk";
+import { USDT0_MAINNET, CNHT0_MAINNET } from "@x402/shared";
 // Dynamically imported after dotenv loads (ES module hoisting would otherwise
 // cause config.ts to read process.env before dotenv runs).
 const { adminAuthRoutes } = await import("./routes/adminAuth.js");
@@ -63,9 +64,9 @@ const NETWORKS: Record<number, NetworkConfig> = {
     chainId: 1030,
     name: "Conflux eSpace",
     rpcUrl: "https://evm.confluxrpc.com",
-    tokenAddress: process.env.USDT0_ADDRESS_MAINNET || "0xaf37e8b6c9ed7f6318979f56fc287d76c30847ff",
+    tokenAddress: process.env.USDT0_ADDRESS_MAINNET || USDT0_MAINNET,
     contractAddress: (process.env.X402_CONTRACT_ADDRESS_MAINNET || undefined) as `0x${string}` | undefined,
-    cnht0Address: process.env.CNHT0_ADDRESS || "0x70bfd7f7eadf9b9827541272589a6b2bb760ae2e",
+    cnht0Address: process.env.CNHT0_ADDRESS || CNHT0_MAINNET,
   },
 };
 
