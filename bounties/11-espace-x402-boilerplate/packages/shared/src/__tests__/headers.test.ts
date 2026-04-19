@@ -145,4 +145,22 @@ describe("splitSignature", () => {
     expect(result.s).toBe(`0x${s}`);
     expect(result.v).toBe(27);
   });
+
+  it("should normalize v=0 to v=27", () => {
+    const r = "a".repeat(64);
+    const s = "b".repeat(64);
+    const signature = `0x${r}${s}00`; // v = 0 (some wallets return this)
+
+    const result = splitSignature(signature);
+    expect(result.v).toBe(27);
+  });
+
+  it("should normalize v=1 to v=28", () => {
+    const r = "a".repeat(64);
+    const s = "b".repeat(64);
+    const signature = `0x${r}${s}01`; // v = 1 (some wallets return this)
+
+    const result = splitSignature(signature);
+    expect(result.v).toBe(28);
+  });
 });

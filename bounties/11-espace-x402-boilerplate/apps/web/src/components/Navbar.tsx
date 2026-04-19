@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { href: "/architecture", label: "Architecture" },
   { href: "/register", label: "Register" },
   { href: "/admin", label: "Admin" },
+  { href: "/wiki", label: "Wiki" },
 ];
 
 export function Navbar() {

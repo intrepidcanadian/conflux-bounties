@@ -44,7 +44,10 @@ export function parsePaymentHeaders(headers: Record<string, string>): X402Paymen
 export function splitSignature(signature: string): { v: number; r: string; s: string } {
   const r = `0x${signature.slice(2, 66)}`;
   const s = `0x${signature.slice(66, 130)}`;
-  const v = parseInt(signature.slice(130, 132), 16);
+  let v = parseInt(signature.slice(130, 132), 16);
+  // Normalize v: some wallets return 0/1 instead of 27/28 for EIP-712 signatures.
+  // On-chain ecrecover requires 27/28, so normalize here.
+  if (v < 27) v += 27;
   return { v, r, s };
 }
 

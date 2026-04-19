@@ -4,6 +4,10 @@ End-to-end reference for **x402 pay-per-request payments** on Conflux eSpace usi
 
 > **Status:** Complete. All acceptance criteria met. Two security audits completed (0 critical/high findings). Built for Conflux Bounty #11.
 
+### Demo Video
+
+[![Demo Video](https://img.youtube.com/vi/XXDkpPWeWBI/maxresdefault.jpg)](https://youtu.be/XXDkpPWeWBI)
+
 ---
 
 ## Table of Contents
@@ -296,7 +300,7 @@ See [`docs/sequence.md`](docs/sequence.md) for detailed Mermaid sequence diagram
 
 | Token | Peg | Testnet Address | Mainnet Address | Standard |
 |-------|-----|-----------------|-----------------|----------|
-| **USDT0** | USD | `0x637B87C22d85Cd5f4C95d09d77c29130947C5A93` (MockUSDT0) | `0xaf37e8b6c9ed7f6318979f56fc287d76c30847ff` | OFT (LayerZero) |
+| **USDT0** | USD | MockUSDT0 (deployed via `npm run deploy:full`, see `deploy-manifest.json`) | `0xaf37e8b6c9ed7f6318979f56fc287d76c30847ff` | OFT (LayerZero) |
 | **CNHT0 (AxCNH)** | CNH | — | `0x70bfd7f7eadf9b9827541272589a6b2bb760ae2e` | OFT (LayerZero) |
 
 Both tokens support ERC-3009 (`transferWithAuthorization` / `receiveWithAuthorization`) for gasless payment signing on Conflux eSpace. For testnet development (chain 71), a `MockUSDT0` contract is provided with the same ERC-3009 interface and a public `mint()` function. On mainnet (chain 1030), both USDT0 and CNHT0 are available as payment options.
@@ -352,13 +356,7 @@ npm run contracts:test
 | `/invoices/:id` | GET | Get invoice by ID |
 | `/invoices/:id/settle` | POST | Submit ERC-3009 signed authorization |
 | `/invoices/:id/verify` | POST | Verify a settled invoice |
-| `/invoices/:id/dev-pay` | POST | Dev helper: simulate payment without signing |
-
-### Sellers
-| Endpoint | Method | Description |
-|---|---|---|
-| `/sellers` | GET | List registered sellers |
-| `/sellers/:address` | GET | Get seller info |
+| `/invoices/:id/release` | POST | Release escrowed funds after the escrow grace period |
 
 ### Admin (requires `X-Admin-Key` header)
 | Endpoint | Method | Description |
@@ -371,7 +369,6 @@ npm run contracts:test
 | `/admin/agent/:address/status` | GET | Check agent pause status |
 | `/admin/agent/:address/pause` | POST | Pause an agent's spending |
 | `/admin/agent/:address/resume` | POST | Resume a paused agent |
-| `/invoices/:id/release` | POST | Release escrowed funds after the escrow grace period |
 
 ### Disputes
 | Endpoint | Method | Description |
@@ -381,9 +378,12 @@ npm run contracts:test
 | `/disputes` | GET | List all disputes (admin, supports `?status=open`) |
 | `/disputes/:id/resolve` | POST | Resolve dispute (`{ resolution: "approved"\|"rejected", adminNote? }`) |
 
-### Agent Chat (dev mode)
+### Dev Mode Only (available in `dev.ts`, not production)
 | Endpoint | Method | Description |
 |---|---|---|
+| `/invoices/:id/dev-pay` | POST | Dev helper: simulate payment without signing |
+| `/sellers` | GET | List registered sellers |
+| `/sellers/:address` | GET | Get seller info |
 | `/agent/chat` | POST | Send a message to the dev agent (`{ message, sessionId? }`) |
 | `/agent/chat/:sessionId` | GET | Retrieve chat history for a session |
 

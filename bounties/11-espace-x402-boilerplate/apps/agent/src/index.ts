@@ -215,7 +215,7 @@ async function runDirect(agent: X402Agent, directArgs: string[]) {
 
   logger.info({ path, method, body }, "Direct endpoint call");
   const result = await agent.callEndpoint(path, method, body);
-  console.log(JSON.stringify(result, null, 2));
+  logger.info({ result }, "Direct call result");
 }
 
 // ─── Run ───

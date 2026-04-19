@@ -5,7 +5,7 @@ import { useAccount, useWalletClient, useChainId, useReadContract, useBalance } 
 import { formatUnits } from "viem";
 import type { PaymentChallenge } from "@/lib/api";
 import { X, CreditCard, Loader2, CheckCircle, AlertTriangle, Wallet } from "lucide-react";
-import { TOKEN_DECIMALS, RECEIVE_WITH_AUTHORIZATION_TYPES, getERC3009Domain, splitSignature, hashNonce } from "@x402/shared";
+import { TOKEN_DECIMALS, RECEIVE_WITH_AUTHORIZATION_TYPES, getERC3009Domain, splitSignature, hashNonce, tokenSymbol } from "@x402/shared";
 
 const balanceOfAbi = [
   {
@@ -16,15 +16,6 @@ const balanceOfAbi = [
     stateMutability: "view",
   },
 ] as const;
-
-/** Resolve a human-readable token symbol from an address */
-function tokenSymbol(address: string): string {
-  const known: Record<string, string> = {
-    "0xaf37e8b6c9ed7f6318979f56fc287d76c30847ff": "USDT0",
-    "0x70bfd7f7eadf9b9827541272589a6b2bb760ae2e": "CNHT0",
-  };
-  return known[address.toLowerCase()] ?? "USDT0";
-}
 
 interface Props {
   challenge: PaymentChallenge;
